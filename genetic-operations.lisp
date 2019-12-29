@@ -22,8 +22,11 @@
 
 ;; Simple N-point crossover
 ;; Defaults as 2-point crossover
-(defun crossover (one two &optional (points 1))
-	(let* ((kpoint (random (length one)))
+(defun crossover (parents)
+	(let* ((cindex (random 2)) ; crossover index of the parent
+	       (one (nth cindex parents))
+	       (two (nth (- 1 cindex) parents))
+	       (kpoint (random (length one)))
 	       (start (loop for i from 0 to (1- kpoint) collect (nth i one)))
 		   (end (loop for i from kpoint to (1- (length one)) collect (nth i two))))
 		(append start end)))

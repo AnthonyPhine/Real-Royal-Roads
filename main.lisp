@@ -35,27 +35,35 @@
 	(let ((fitness-limit (* 2 (expt *genotype-length* 2))))
 		(/ (royal-road genotype *block-size*) fitness-limit)))
 
+
+;; This is the heart of the genetic algorithm
+(defun evolve (population)
+	(let ((child nil) (next-pop nil))
+		(if (> (random 1.0) *crossover-rate*)
+			(setq child (crossover (selection population 2)))
+			(setq child (selection population 1)))
+		(setq child (mutate child *mutation-rate*))
+		(setq next-pop (stabilise-drift child population))
+		(if (equal next-pop population)
+			(evolve population)
+			next-pop)))
+
+
 ;; Will recursively loop until max ones is found
 (defun run-algorithm (current-pop gen-count)
-	(let ((parents nil) (child nil) (solutions nil)
-	      (best '(0)) (cross-index (random 2)))
+	(let ((solutions nil) (best '(0)))
 
-		(if (> (random 1.0) *crossover-rate*)
-			(progn
-				(setq parents (selection current-pop 2))
-				(setq child (crossover (nth cross-index parents)
-				                       (nth (- 1 cross-index) parents))))
-				(setq child (nth (random (length current-pop)) current-pop)))
+		;; evolve the population
+		(setq current-pop (evolve current-pop))
 
-		(setq child (mutate child *mutation-rate*))
-		
-		(setq current-pop (stabilise-drift child current-pop))
+		;; measure health of population
 		(loop for genome in current-pop do
 			(let ((score (fitness genome)))
 				(if (> score (fitness best))
 					(setq best genome))
 				(if (eq score 1)
 					(setq solutions (cons genome solutions)))))
+
 		(if *verbose*
 			(format t "Best genome: ~a (cycle: ~a)~%" (pretty best) gen-count))
 
@@ -65,15 +73,6 @@
 				(if *verbose*
 					(format t "Solutions: ~a~%" solutions))
 				gen-count))))
-
-;; idealised single run version of the above
-;(defun run-algorithm (population)
-;	(let ((parents nil) (child nil))
-;		(if (> (random 1.0) *crossover-rate*)
-;			(setq child (crossover (selection current-pop 2)))
-;			(setq child (selection current-pop 1)))
-;		(setq child (mutate (child *mutation-rate*)))
-;		(stabilise-drift current-pop child)))
 
 
 ;;;; ------------------------------------------ ;;;;

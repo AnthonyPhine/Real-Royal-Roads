@@ -23,21 +23,22 @@
          (remove-nth-f ,lst ,n-var)))))
 ;; ====================================	
 
-;; ADD: if amount = 1 then return random nth of pop
 ;; Selection (tournament - dueling)
 (defun selection (population amount)
-	(let ((outpop nil) index-one index-two genome-one genome-two)
-		(loop for i from 0 below amount
-			do (progn
-				(setq index-one (random (length population)))
-				(setq genome-one (pop-nth index-one population))
-				(setq index-two (random (length population)))
-				(setq genome-two (pop-nth index-two population))
-				(if (> (fitness (phenotype genome-one))
-				       (fitness (phenotype genome-two)))
-					(setq outpop (cons genome-one outpop))
-					(setq outpop (cons genome-two outpop)))))
-		outpop))
+	(if (eq amount 1)
+		(nth (random (length population)) population)
+		(let ((outpop nil) index-one index-two genome-one genome-two)
+			(loop for i from 0 below amount
+				do (progn
+					(setq index-one (random (length population)))
+					(setq genome-one (pop-nth index-one population))
+					(setq index-two (random (length population)))
+					(setq genome-two (pop-nth index-two population))
+					(if (> (fitness (phenotype genome-one))
+					       (fitness (phenotype genome-two)))
+						(setq outpop (cons genome-one outpop))
+						(setq outpop (cons genome-two outpop)))))
+			outpop)))
 
 ;; returns a tuple (best-fitness . worst-fitness)
 (defun pop-fitness-limits (population)
