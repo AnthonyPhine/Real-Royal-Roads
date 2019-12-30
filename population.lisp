@@ -116,8 +116,72 @@
 		(setf out (loop for i from 0 below (length out)
 			collect (mutate (nth i out) rate)))))
 
+;; =============================================================================
 
-;; testing
-;(defvar mypop '((1 1 1 0) (1 1 1 0) (1 1 1 0) (1 0 0 1)))
-;(loop for geno in mypop do (format t "~a~%" (fitness geno)))
-;(print (stabilise-drift '(0 0 0 1) mypop))
+;; Roulette-wheel Selection
+(defun roulette (group)
+	(let* ((individual (nth (random (length group)) group))
+	       (ball (random (float (loop for i in group sum (fitness i)))))
+	       (tally 0) (result nil))
+		(loop for genome in group do
+			(progn
+				(setq tally (+ tally (fitness genome)))
+				(if (> tally ball)
+					(setq result genome)))
+			until (not (null result)))
+		result))
+
+
+;; Boltzmann Selection
+(defun boltzmann (group &optional (tally 0))
+	(let ((result nil) (max-prob 0) (size (length group)))
+	
+		(setq max-prob (loop for genome in group sum
+		                     (exp (/ (fitness genome) size))))
+
+		(loop for genome in group do
+			(progn
+				(setq tally (+ tally (/ (exp (/ (fitness genome) size)) max-prob)))
+				(if (< (random max-prob) tally)
+					(setq result genome)))
+			until (not (null result)))
+
+		(if (null result)
+			(boltzmann group tally)
+			result)))
+
+
+(defun unique-append (item list)
+	(if (not (member item list))
+		(cons item list)
+		list))
+
+;; Tournament Selection for n-sized tournaments
+(defun tournament (group &optional (brawl-size 2))
+	(let ((fighters nil) (winner nil))
+		(loop until (eq (length fighters) brawl-size) do
+			(setq fighters (unique-append
+				(nth (random (length group)) group) fighters)))
+
+		(setq winner (nth 0 fighters))
+		(loop for fighter in fighters do
+			(if (> (fitness fighter) (fitness winner))
+				(setq winner fighter)))
+		winner))
+
+(defvar *selection-type* nil)
+(defun is-select (type) (if (equal type *selection-type*) t))
+(defun select-by-type (group)
+	(cond
+		((is-select "Tournament") (tournament group))
+		((is-select "Boltzmann")  (boltzmann group))
+		((is-select "Roulette")   (roulette group))
+		(t (nth (random (length group)) group))))
+
+;; A generalised selection
+(defun selection (population amount)
+	(if (eq amount 1)
+		(select-by-type population)
+		(loop for i from 0 below amount collect
+			(select-by-type population))))
+

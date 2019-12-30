@@ -26,6 +26,7 @@
 (defvar *block-size* (get-arg 1))
 (defvar *population-size* *genotype-length*)
 (defvar *verbose* nil)
+(setq *selection-type* nil)
 (defvar *crossover-rate* 0.5)
 (defvar *mutation-rate* (/ 1 *genotype-length*))
 (defvar *initial-pop* (generate-pop *population-size* *genotype-length*))
@@ -43,10 +44,7 @@
 			(setq child (crossover (selection population 2)))
 			(setq child (selection population 1)))
 		(setq child (mutate child *mutation-rate*))
-		(setq next-pop (stabilise-drift child population))
-		(if (equal next-pop population)
-			(evolve population)
-			next-pop)))
+		(stabilise-drift child population)))
 
 
 ;; Will recursively loop until max ones is found
